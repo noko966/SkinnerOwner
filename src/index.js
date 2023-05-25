@@ -1,5 +1,6 @@
 const { QMainWindow, QWidget, QLabel, FlexLayout, QPushButton, 
     QFileDialog, QIcon, QLineEdit, FileMode } = require('@nodegui/nodegui');
+//const { tokenizer } = require('@csstools/tokenizer');
 const logo = require('../assets/logox200.png');
 const fs = require("fs");
 const path = require("path");
@@ -60,7 +61,6 @@ parameterBInput.addEventListener('textEdited', ()=>{
 
 function updateState(key, val){
     State[key] = val;
-    console.log(State);
     return State;
 }
 
@@ -121,48 +121,43 @@ return formattedDate
 }
 
 
-function replaceVariables(a, b) {
-        const StateStarterPaths = State.workingFiles;
-    clearDirectory(outputPath);
-    const quote = `  /* ---Modified On ${generateTodaysDate()} by Nik--- */  `
+function replaceVariables(variableNameDefault, variableNameReplacer) {
+  const StateStarterPaths = State.workingFiles;
+  clearDirectory(outputPath);
+  const quote = `  /* ---Modified On ${generateTodaysDate()} by Nik--- */  `
   const encoding = "utf8";
-  const variableNameA = a;
-  const regexPatternA = new RegExp(
-    `\\${variableNameA}\\:\\s*([^;]+)`
-  );
-  const variableNameB = b;
-  const regexPatternB = new RegExp(`\\${variableNameB}\\:\\s*([^;]+)`);
+  // const variableNameDefault = a;
+  const regexPatternDefault = new RegExp(`\\${variableNameDefault}\\:\\s*([^;]+;)`, "g");
+  // const variableNameReplacer = b;
+  const regexPatternReplacer = new RegExp(`\\${variableNameReplacer}\\:\\s*([^;]+)`, "g");
+  let modifiedCssString;
+  
   for (let i = 0; i < StateStarterPaths.length; i++) {
-    console.log(StateStarterPaths[i], "aaaa");
     const fileContent = fs.readFileSync(
       path.join(filesPathStarter, "/", StateStarterPaths[i]),
       encoding
     );
 
-    const matchA = regexPatternA.exec(fileContent);
-    const matchB = regexPatternB.exec(fileContent);
+    modifiedCssString = fileContent;
 
-    if (matchA && matchB) {
-      const variableValueBorder = matchA[1].trim();
-      const variableValueBg3 = matchB[1].trim();
+    let [defaultLight, defaultDark] = fileContent.match(regexPatternDefault);
 
-      console.log(`Value of ${variableNameA}: ${variableValueBorder}`);
-      console.log(`Value of ${variableNameB}: ${variableValueBg3}`);
+    let [replacerLight, replacerDark] = fileContent.match(regexPatternReplacer);
 
-      const matchedBorder = fileContent.replace(
-        regexPatternA,
-        `${variableNameA}: ${variableValueBg3} ${quote}`
-      );
+    console.log({defaultLight, defaultDark, replacerLight, replacerDark});
+    const replacerLightValue = replacerLight.split(":")[1];
 
-      let fileToWrite = fs.writeFileSync(
-        path.join(__dirname, '../', "output", "/", StateStarterPaths[i]),
-        matchedBorder
-      );
-    } else {
-      console.log(
-        `Variable ${variableNameA} or  ${variableNameB}  not found.`
-      );
+    modifiedCssString = modifiedCssString.replace(defaultLight, `${variableNameDefault}: ${replacerLightValue}; ${quote}`);
+    
+    if (defaultDark && replacerDark) {
+      const replacerDarkValue = replacerDark.split(":")[1];
+      modifiedCssString = modifiedCssString.replace(defaultDark, `${variableNameDefault}: ${replacerDarkValue}; ${quote}`);
     }
+
+    fs.writeFileSync(
+      path.join(__dirname, '../', "output", "/", StateStarterPaths[i]),
+      modifiedCssString
+    );
   }
 }
 
@@ -183,7 +178,6 @@ function selectWorkingFiles(){
     fileDialog.setNameFilter('Images (*.css)');
     fileDialog.exec();
     const selectedFiles = fileDialog.selectedFiles();
-    console.log(selectedFiles);
 
     for (let i = 0; i < selectedFiles.length; i++) {
         copyFilesToInnerDirectory(selectedFiles[i], filesPathStarter);
