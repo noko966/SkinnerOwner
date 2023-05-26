@@ -17,8 +17,8 @@ const filesPathStarter = path.join(__dirname, '../',  "files/starter");
 
 let State = {
     workingFiles: fs.readdirSync(filesPathStarter),
-    variableA: "--bodyBorder",
-    variableB: "--bodyBg3",
+    variableA: "--inputBorder",
+    variableB: "--inputBg3",
 }
 
 
@@ -140,17 +140,17 @@ function replaceVariables(variableNameDefault, variableNameReplacer) {
 
     modifiedCssString = fileContent;
 
-    let [defaultLight, defaultDark] = fileContent.match(regexPatternDefault);
+    let [defaultLight, defaultDark] = fileContent?.match(regexPatternDefault) || [];
 
-    let [replacerLight, replacerDark] = fileContent.match(regexPatternReplacer);
+    let [replacerLight, replacerDark] = fileContent?.match(regexPatternReplacer) || [];
 
     console.log({defaultLight, defaultDark, replacerLight, replacerDark});
-    const replacerLightValue = replacerLight.split(":")[1];
+    const replacerLightValue = replacerLight?.split(":")?.[1];
 
     modifiedCssString = modifiedCssString.replace(defaultLight, `${variableNameDefault}: ${replacerLightValue}; ${quote}`);
     
     if (defaultDark && replacerDark) {
-      const replacerDarkValue = replacerDark.split(":")[1];
+      const replacerDarkValue = replacerDark?.split(":")?.[1];
       modifiedCssString = modifiedCssString.replace(defaultDark, `${variableNameDefault}: ${replacerDarkValue}; ${quote}`);
     }
 

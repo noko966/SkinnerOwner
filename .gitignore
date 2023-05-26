@@ -3,4 +3,4 @@ dist/
 *.log
 .vscode
 output/
-files/starter
+files/starter/
